@@ -1,4 +1,4 @@
-ComposicionCartera <- function(baseValuaciones){
+qComposicionCartera <- function(baseValuaciones){
 source("FiltroAntiguedad.R")
 datos2 <- subset(baseValuaciones[complete.cases(baseValuaciones),],FechaAutorizacionValuacion < "2021-01-01")
 datos2[which(datos2$Modelo > 2021),"Modelo"] <- c(2019,2012,2016,2005,2018)
@@ -109,5 +109,5 @@ colnames(valorAgencia) <- "AGENCIA"
 colnames(valorTaller) <- "TALLER"
 colnames(valorVehiculo) <- c(as.character(rangoModelo[1]),paste(as.character(rangoModelo[1]-1),"-",as.character(rangoModelo[2]), sep = ""),paste(as.character(rangoModelo[2]-1),"-",as.character(rangoModelo[3]), sep = ""),paste(as.character(rangoModelo[3]-1),"-",as.character(rangoModelo[4]), sep = ""),paste("<=",as.character(rangoModelo[5]), sep = ""))
 centroReparacionValor <- cbind(valorAgencia,valorTaller,valorVehiculo)
-return(list(centroDeReparacionMarca,centroReparacionValor))
+return(list(centroDeReparacionMarca,centroReparacionValor,totalValuaciones))
 }
