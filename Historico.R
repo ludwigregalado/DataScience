@@ -23,11 +23,12 @@ baseValuaciones$Asegurado_Tercero <- as.factor(baseValuaciones$Asegurado_Tercero
 baseValuaciones$IdOficinaAtencion <- as.factor(baseValuaciones$IdOficinaAtencion)
 baseValuaciones$MarcaVehiculoNormalizado <- as.factor(baseValuaciones$MarcaVehiculoNormalizado)
 baseValuaciones$SubMarcaVehiculo <- as.factor(baseValuaciones$SubMarcaVehiculo)
+baseValuaciones$Modelo <- as.integer(baseValuaciones$Modelo)
 baseValuaciones$TipoCentroReparacion <- as.factor(baseValuaciones$TipoCentroReparacion)
 
 # Ordering data by date. FechaAutorizacionValuacion
 baseValuaciones <- dplyr::arrange(baseValuaciones,FechaAutorizacionValuacion)
-rangoFechas <- seq(min(baseValuaciones$FechaAutorizacionValuacion),by ="month",length.out = 12)
+rangoFechas <- seq(min(baseValuaciones$FechaAutorizacionValuacion),by ="month",length.out = elapsed_months(max(baseValuaciones$FechaAutorizacionValuacion),min(baseValuaciones$FechaAutorizacionValuacion)))
 
 # Generating historic data-----------------------------------------------------------------------------
 datosMensuales = list()
