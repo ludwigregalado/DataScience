@@ -36,8 +36,9 @@ baseValuaciones <- sqlQuery(DWH,"
                   SELECT TOP 10 * FROM Tb_BI_GrlSinValuacion
                   
                  ")# Querying data from DWH
-baseValuaciones <- basic_clean(baseValuaciones)
-datos <- Historico(baseValuaciones[complete.cases(baseValuaciones),])#Calling a function to sort data by date and generate historical summary
+# Performing a basic cleaning to the data
+baseValuaciones <- basic_clean(baseValuaciones[complete.cases(baseValuaciones),])
+datos <- Historico(baseValuaciones)#Calling a function to sort data by date and generate historical summary
 # baseValuaciones <- subset(baseValuaciones, Modelo >= 1886 & Modelo <= 2021 & ValorComercial > 0 & MontoRefacciones >=0 & MontoManoObra > 0 & MontoTotalValuacion > 0)
 baseValuaciones$Modelo <- as.factor(baseValuaciones$Modelo)
 # mixMarcas <- ComposicionCartera(baseValuaciones)
