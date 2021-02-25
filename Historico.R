@@ -1,9 +1,8 @@
+# Function to take a data frame with valuations from a long period of time and generate historical data up to the last complete month
 Historico <- function(baseValuaciones){
 
 # Importing necessary libraries
-library(tidyverse)
-library(lubridate)
-library(data.table)
+necessaryPkg(c("lubridate","data.table","tidyverse"))
 
 # Verifying that column type are correct-----------------------------------------------------------------------------
 # Firstly it is necessary to set FechaOcurrido and FechaAutorizacionValuacion to date because they have innecesary time stamps
