@@ -36,7 +36,7 @@ Historico <- function(baseValuaciones, porOficina){
   
   # Ordering data by date. FechaAutorizacionValuacion
   baseValuaciones <- dplyr::arrange(baseValuaciones,FechaAutorizacionValuacion)
-  rangoFechas <- seq(min(baseValuaciones$FechaAutorizacionValuacion),by ="month",length.out = 36)#elapsed_months(max(baseValuaciones$FechaAutorizacionValuacion),min(baseValuaciones$FechaAutorizacionValuacion)))
+  rangoFechas <- seq(min(baseValuaciones$FechaAutorizacionValuacion),by ="month",length.out = elapsed_months(max(baseValuaciones$FechaAutorizacionValuacion),min(baseValuaciones$FechaAutorizacionValuacion)))
   
   # Generating historic data-----------------------------------------------------------------------------
   datosMensuales = list()
@@ -251,17 +251,17 @@ extraerPredicciones <- function(FORECAST){
     fcManoObra <- FORECAST[[4]]
     datosExportar <- rbind(datosExportar
                             , cbind(rep(format(Sys.Date(),"%Y"),length(fcCosto$mean))
-                                    , rep(format(Sys.Date()-months(2),"%B"),length(fcCosto$mean))#-month(1)
+                                    , rep(format(Sys.Date(),"%m"),length(fcCosto$mean))#-month(1)
                                     , format(as.Date(time(fcCosto$mean)), "%Y%m")
                                     , round(fcCosto$mean)
-                                    , round(fcCosto$lower, 2)
-                                    , round(fcCosto$upper, 2)
+                                    , round(fcCosto$lower)
+                                    , round(fcCosto$upper)
                                     , round(fcPiezas$mean, 2)
                                     , round(fcPiezas$lower, 2)
                                     , round(fcPiezas$upper, 2)
-                                    , round(fcManoObra$mean, 2)
-                                    , round(fcManoObra$lower, 2)
-                                    , round(fcManoObra$upper, 2)
+                                    , round(fcManoObra$mean)
+                                    , round(fcManoObra$lower)
+                                    , round(fcManoObra$upper)
                                     , round(fcVal$fit)
                             ))
 
@@ -281,18 +281,18 @@ extraerPredicciones <- function(FORECAST){
       fcManoObra <- FORECAST[[i]][[4]]
       datosExportar <- rbind(datosExportar
                               , cbind(rep(format(Sys.Date(),"%Y"),length(fcCosto$mean))
-                                      , rep(format(Sys.Date()-months(2),"%B"),length(fcCosto$mean))#-months(1)
+                                      , rep(format(Sys.Date(),"%m"),length(fcCosto$mean))#-months(1)
                                       , format(as.Date(time(fcCosto$mean)), "%Y%m")
                                       , rep(names(FORECAST[i]), length(fcCosto$mean))
                                       , round(fcCosto$mean)
-                                      , round(fcCosto$lower, 2)
-                                      , round(fcCosto$upper, 2)
+                                      , round(fcCosto$lower)
+                                      , round(fcCosto$upper)
                                       , round(fcPiezas$mean, 2)
                                       , round(fcPiezas$lower, 2)
                                       , round(fcPiezas$upper, 2)
-                                      , round(fcManoObra$mean, 2)
-                                      , round(fcManoObra$lower, 2)
-                                      , round(fcManoObra$upper, 2)
+                                      , round(fcManoObra$mean)
+                                      , round(fcManoObra$lower)
+                                      , round(fcManoObra$upper)
                                       , round(fcVal$fit)
                               ))
     }
