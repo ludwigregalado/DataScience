@@ -2,7 +2,7 @@ source("customizedHDI.R")
 necessaryPkg(c('RODBC', 'zoo', 'tidyverse','lubridate','XLConnect','tictoc'))
 
 # Reading data from DB-----------------------------------------------------------------------------
-DWH<-odbcDriverConnect('driver={SQL Server};server=data.hdi.com.mx;database=Procesos;trusted_connection=true')#Connecting to Data WareHouse
+DWH<-odbcDriverConnect(readLines("connection_R.sql"))#Connecting to Data WareHouse
 baseValuaciones <- sqlQuery(DWH,"
                   SELECT 
                   v.ValLst_NumeroExpediente
