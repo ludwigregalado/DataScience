@@ -1,9 +1,10 @@
 source("customizedHDI.R")
 necessaryPkg(c('RODBC', 'zoo', 'tidyverse','lubridate','XLConnect','tictoc'))
-
+equipoPesado <- FALSE
+cotizador <- TRUE
 # Reading data from DB-----------------------------------------------------------------------------
-DWH<-odbcDriverConnect(readLines("connection_R.sql"))#Connecting to Data WareHouse
-baseValuaciones <- sqlQuery(DWH,"
+DWH <- odbcDriverConnect(readLines("connection_R.sql"))#Connecting to Data WareHouse
+baseValuaciones <- sqlQuery(DWH, paste("
                   SELECT 
                   v.ValLst_NumeroExpediente
                   , Asegurado_Tercero =
@@ -24,60 +25,74 @@ baseValuaciones <- sqlQuery(DWH,"
                   , v.Modelo
                   , v.TipoCentroReparacion
                   
-                  FROM Tb_BI_GrlSinValuacion v
+                  FROM Tb_BI_GrlSinValuacion v",
                   
-                  WHERE v.FechaAutorizacionValuacion >= '2018-01-01 00:00:00'
-                  AND v.IdLineaNegocio = 4
+                ifelse(cotizador, 
+		            "WHERE v.ValLst_NumeroExpediente IN 
+                (
+                SELECT ValLst_NumeroExpediente
+                FROM VW_bi_AutrSinValuacionRefacciones
+                WHERE TipoAsignacionCotizacion = 'COTIZADOR')
+		            AND v.FechaAutorizacionValuacion >= '2018-01-01 00:00:00'",
+		            "WHERE v.FechaAutorizacionValuacion >= '2018-01-01 00:00:00'"),
+                "AND v.IdLineaNegocio = 4
                   AND v.TipoProceso = 'EN REPARACION'
-                  AND v.NombreValuador NOT IN ('LUIS RODRIGUEZ','ERICK GONZALEZ','ALFONSO CRUZ','ALEJANDRO VIGIL','FERNANDO ROMERO','DAVID SILVA BERNAL')
-                 ")# Querying data from DWH
-
+                  AND v.NombreValuador ",
+		            ifelse(equipoPesado,
+		            "IN","NOT IN"), "('LUIS RODRIGUEZ','ERICK GONZALEZ','ALFONSO CRUZ','ALEJANDRO VIGIL','FERNANDO ROMERO','DAVID SILVA BERNAL')"))# Querying data from DWH
+close(DWH)
 baseValuaciones <- basic_clean(baseValuaciones[complete.cases(baseValuaciones),])# Performing a basic cleaning to the data
 # datos <- Historico(baseValuaciones, FALSE)#Calling a function to sort data by date and generate historical summary
 baseValuaciones$Modelo <- as.factor(baseValuaciones$Modelo)
 
 listaPorOficina <- baseValuaciones %>% 
                     separarOficinas("OficinasR.csv", .) %>% 
-                      simplify() %>% first()
+                    simplify() %>%
+                    first()
 
 # oficinasTest <- c(3,9,7,14,29,22)#Leon, Morelia, CDMX, Chihuahua, Puebla-Tehuacan, Culiacan
 
 # In this section, the forecasting is carried out (takes approximately 3 hours)---------------------------------------------
 tic()# Starts a counter
-datosPorOficina <- listaPorOficina %>%
+forecastPorOficina = list()
+forecastNacional = list()
+
+forecastPorOficina <- listaPorOficina %>%
   lapply(.  %>% {Historico( ., TRUE)}) %>%# TRUE if you want forecasting by office; FALSE if HDI general forecast is required
-  lapply(.  %>% {predictReplacements( ., meses = elapsed_months('2022-01-01',Sys.Date())+2)})
+  lapply(.  %>% {predictReplacements( ., meses = elapsed_months('2022-01-01',Sys.Date()))})
 # Forecasting for HDI data
-datosHDI <- baseValuaciones %>%
+forecastNacional <- baseValuaciones %>%
   Historico(., porOficina = FALSE) %>% 
   simplify() %>% last() %>% 
-  predictReplacements(., meses = elapsed_months('2022-01-01',Sys.Date())+2)
-
-# Opening the workbook in which the data will be saved
-wb <- loadWorkbook("PrediccionesCostosRefacciones_2021.xlsx")
-
-# Extracting data from forecast objects to record them into a spreadsheet
-# createSheet(wb, "Nacional_Ligero")
-# writeWorksheet(wb,extraerPredicciones(datosHDI),sheet = "Nacional_Ligero")
-appendWorksheet(wb,extraerPredicciones(datosHDI),sheet = "Nacional_Ligero")
-# createSheet(wb, "Oficina_Ligero")
-# writeWorksheet(wb,extraerPredicciones(datosPorOficina),sheet = "Oficina_Ligero")
-appendWorksheet(wb,extraerPredicciones(datosPorOficina),sheet = "Oficina_Ligero")
-saveWorkbook(wb)
+  predictReplacements(., meses = elapsed_months('2022-01-01',Sys.Date()))
 toc()# Finishes the counter and shows up the elapsed time in seconds
 
-# Plotting section (to check some of the forecasts)--------------------------------------------------------------------------
+if(equipoPesado){
+  datosNacional <- extraerPredicciones(forecastNacional) %>% cbind(., EquipoPesado = 1)
+  datosPorOficina <- extraerPredicciones(forecastPorOficina) %>% cbind(., EquipoPesado = 1)
+} else{
+  datosNacional <- extraerPredicciones(forecastNacional) %>% cbind(., EquipoPesado = 0)
+  datosPorOficina <- extraerPredicciones(forecastPorOficina) %>% cbind(., EquipoPesado = 0)
+}
 
-# simplify2array()
+if(cotizador){
+  datosNacional <- datosNacional %>% cbind(., Cotizador = 1)
+  datosPorOficina <- datosPorOficina %>% cbind(., Cotizador = 1)
+} else{
+  datosNacional <- datosNacional %>% cbind(., Cotizador = 0)
+  datosPorOficina <- datosPorOficina %>% cbind(., Cotizador = 0)
+}
 
-# autoplot(fcCosto)+ggtitle(paste("Prediccion de costo medio"
-#                                 , format(Sys.Date(),"%b")
-#                                 , "-"
-#                                 , format(Sys.Date()+months(10),"%b")
-#                                 , format(Sys.Date(),"%Y")))
+datosDWH <- cbind(rbind(datosNacional, datosPorOficina))
+datosDWH <- datosDWH %>% 
+                    add_column(FechaPrediccion = Sys.Date(), .before = "Periodo")                  
 
-# autoplot(fcPiezas)+xlab("Fecha")+ylab("Piezas")+ggtitle(paste("Prediccion de piezas por valuaciones"
-#                                                               , format(Sys.Date(),"%b")
-#                                                               , "-"
-#                                                               , format(Sys.Date()+months(5),"%b")
-#                                                               , format(Sys.Date(),"%Y")))
+datosDWH[2:8] <- lapply(datosDWH[2:8], as.integer)
+datosDWH[9:13] <- lapply(datosDWH[9:13], as.numeric)
+datosDWH[14:20] <- lapply(datosDWH[14:20], as.integer)
+
+write_csv(datosDWH,"datoscOTIZADOR.csv")#, append = TRUE)
+# write_csv(datosDWH,"datosDWH.csv", append = TRUE)
+# 
+# DWH<-DWH <- odbcDriverConnect(readLines("connection_R.sql"))#Connecting to Data WareHouse
+# RODBC::sqlSave(DWH, dat = datosDWH, "PrediccionCosto_Refacciones", verbose=TRUE, fast=F, append=TRUE, rownames = FALSE)
