@@ -1,5 +1,5 @@
-source("customizedHDI.R")
-necessaryPkg(c('RODBC', 'zoo', 'tidyverse','lubridate','XLConnect','tictoc'))
+source("customized.R")
+necessaryPkg(c('RODBC', 'zoo', 'tidyverse','lubridate','tictoc'))
 equipoPesado <- FALSE
 cotizador <- TRUE
 # Reading data from DB-----------------------------------------------------------------------------
@@ -91,8 +91,7 @@ datosDWH[2:8] <- lapply(datosDWH[2:8], as.integer)
 datosDWH[9:13] <- lapply(datosDWH[9:13], as.numeric)
 datosDWH[14:20] <- lapply(datosDWH[14:20], as.integer)
 
-write_csv(datosDWH,"datoscOTIZADOR.csv")#, append = TRUE)
-# write_csv(datosDWH,"datosDWH.csv", append = TRUE)
-# 
-# DWH<-DWH <- odbcDriverConnect(readLines("connection_R.sql"))#Connecting to Data WareHouse
-# RODBC::sqlSave(DWH, dat = datosDWH, "PrediccionCosto_Refacciones", verbose=TRUE, fast=F, append=TRUE, rownames = FALSE)
+write_csv(datosDWH,"datosDWH.csv", append = TRUE)
+ 
+DWH<-DWH <- odbcDriverConnect(readLines("connection_R.sql"))#Connecting to Data WareHouse
+RODBC::sqlSave(DWH, dat = datosDWH, "PrediccionCosto_Refacciones", verbose=TRUE, fast=F, append=TRUE, rownames = FALSE)
